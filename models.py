@@ -27,6 +27,7 @@ class Dish(db.Model):
     price = Column(Integer, nullable=False)
     description = Column(String, nullable=False)
     picture = Column(String, nullable=False)
+    category_id = Column(Integer, ForeignKey("category.id"))
     category = relationship("Category", back_populates="id")
 
 
@@ -36,4 +37,12 @@ class Order(db.Model):
     date = Column(Date, default=_get_date)
     summa = Column(Integer, nullable=False)
     status = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    dishes = relationship("Dish", back_populates="title")
+
+
+class Category(db.Model):
+    __tablename__ = "category"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
     dishes = relationship("Dish", back_populates="title")
