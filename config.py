@@ -1,7 +1,7 @@
 import os
 
 current_path = os.path.dirname(os.path.realpath(__file__))
-db_path = "sqlite:///" + current_path + "\\test.db"
+db_path = "sqlite:///data_base.db"
 
 
 class Config:
