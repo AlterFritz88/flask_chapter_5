@@ -4,7 +4,7 @@ from flask import abort, flash, session, redirect, request, render_template, url
 
 from app import app, db
 from models import User, Category, Dish
-from forms import MakeOrder
+from forms import MakeOrder, Registration, Login
 
 
 
@@ -53,7 +53,26 @@ def make_order():
 
 @app.route('/auth', methods=["POST", "GET"])
 def auth():
-    return render_template("auth.html")
+    log_form = Login()
+    reg_form = Registration()
+    return render_template("auth.html", log_form=log_form, reg_form=reg_form)
+
+
+@app.route('/login', methods=["POST"])
+def login():
+    form = Login()
+    reg_form = Registration()
+    print(form.mail.process_errors)
+    print(form.password.errors)
+    if form.validate_on_submit():
+        return "Залогинено"
+    else:
+        return render_template("auth.html", log_form=form, reg_form=reg_form)
+
+
+@app.route('/registration', methods=["POST"])
+def registration():
+    return "Зареган"
 
 
 @app.route('/cart_del/<dish_id>', methods=["POST", "GET"])

@@ -4,21 +4,21 @@ from wtforms.validators import InputRequired, Length, DataRequired, Email
 
 
 class MakeOrder(FlaskForm):
-    name = StringField("Ваше имя", [InputRequired()])
-    address = StringField("Адрес", [InputRequired()])
-    mail = StringField("Электропочта", [InputRequired(), Email()])
+    name = StringField("Ваше имя", [InputRequired("Введите имя")])
+    address = StringField("Адрес", [InputRequired("Введите адрес")])
+    mail = StringField("Электропочта", [InputRequired("Введите емайл"), Email("Это не почта")])
     phone = StringField("Телефон", [InputRequired()])
     submit = SubmitField('Оформить заказ')
 
 
 class Login(FlaskForm):
-    mail = StringField("Электропочта", [InputRequired(), Email()])
-    password = PasswordField("Пароль", [InputRequired(), Length(min=5)])
+    mail = StringField("Электропочта", validators=[DataRequired(message="Нужна почта"), Email(message="Неверная электропочта")])
+    password = PasswordField("Пароль", validators=[DataRequired(message="Введите пароль"), Length(min=5)])
     submit = SubmitField('Войти')
 
 
 class Registration(FlaskForm):
-    mail = StringField("Электропочта", [InputRequired(), Email()])
+    mail = StringField("Электропочта", [Email("Неверная электропочта"), InputRequired()])
     password = PasswordField("Пароль", [InputRequired(), Length(min=5)])
     password_1 = PasswordField("Пароль ещё раз", [InputRequired(), Length(min=5)])
-    submit = SubmitField('Войти')
+    submit = SubmitField('Зарегистрироваться')
