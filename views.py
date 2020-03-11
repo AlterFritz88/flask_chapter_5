@@ -55,24 +55,28 @@ def make_order():
 def auth():
     log_form = Login()
     reg_form = Registration()
-    return render_template("auth.html", log_form=log_form, reg_form=reg_form)
+    return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="")
 
 
 @app.route('/login', methods=["POST"])
 def login():
-    form = Login()
+    log_form = Login()
     reg_form = Registration()
-    print(form.mail.process_errors)
-    print(form.password.errors)
-    if form.validate_on_submit():
-        return "Залогинено"
+    print(log_form.mail.process_errors)
+    print(log_form.password.errors)
+    if log_form.validate_on_submit():
+
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form,  message="зарегистрирован")
     else:
-        return render_template("auth.html", log_form=form, reg_form=reg_form)
+        error = "ошибка"
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=error)
 
 
 @app.route('/registration', methods=["POST"])
 def registration():
-    return "Зареган"
+    log_form = Login()
+    reg_form = Registration()
+    return render_template("auth.html", log_form=log_form, reg_form=reg_form)
 
 
 @app.route('/cart_del/<dish_id>', methods=["POST", "GET"])
