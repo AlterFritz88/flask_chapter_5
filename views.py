@@ -1,5 +1,4 @@
 from collections import Counter
-
 from flask import abort, flash, session, redirect, request, render_template, url_for
 
 from app import app, db
@@ -62,21 +61,38 @@ def auth():
 def login():
     log_form = Login()
     reg_form = Registration()
-    print(log_form.mail.process_errors)
-    print(log_form.password.errors)
-    if log_form.validate_on_submit():
 
-        return render_template("auth.html", log_form=log_form, reg_form=reg_form,  message="зарегистрирован")
+    if log_form.validate_on_submit():
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form,  message="залогинен")
     else:
-        error = "ошибка"
-        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=error)
+        error = []
+        if log_form.mail.errors:
+            error.append("ошибка в электропочте")
+        if log_form.password.errors:
+            error.append("ошибка в пароле")
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=", ".join(error))
 
 
 @app.route('/registration', methods=["POST"])
 def registration():
     log_form = Login()
     reg_form = Registration()
-    return render_template("auth.html", log_form=log_form, reg_form=reg_form)
+    if reg_form.validate_on_submit():
+        if reg_form.password != reg_form.password_1:
+            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Ошибка в пароле. Парели не равны")
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form,  message="зарегистрирован")
+
+    else:
+        print(reg_form.mail.errors)
+
+        error = []
+        if reg_form.mail.errors:
+            error.append("ошибка в электропочте")
+        if reg_form.password.errors or reg_form.password_1.errors:
+            error.append("ошибка в пароле")
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=", ".join(error))
+
+    #return render_template("auth.html", log_form=log_form, reg_form=reg_form)
 
 
 @app.route('/cart_del/<dish_id>', methods=["POST", "GET"])

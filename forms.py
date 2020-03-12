@@ -13,12 +13,12 @@ class MakeOrder(FlaskForm):
 
 class Login(FlaskForm):
     mail = StringField("Электропочта", validators=[DataRequired(message="Нужна почта"), Email(message="Неверная электропочта")])
-    password = PasswordField("Пароль", validators=[DataRequired(message="Введите пароль"), Length(min=5)])
+    password = PasswordField("Пароль", validators=[DataRequired(message="Введите пароль"), Length(min=5, message="Слишком короткий пароль")])
     submit = SubmitField('Войти')
 
 
 class Registration(FlaskForm):
     mail = StringField("Электропочта", [Email("Неверная электропочта"), InputRequired()])
-    password = PasswordField("Пароль", [InputRequired(), Length(min=5)])
-    password_1 = PasswordField("Пароль ещё раз", [InputRequired(), Length(min=5)])
+    password = PasswordField("Пароль", [InputRequired(), Length(min=5, message="Слишком короткий пароль")])
+    password_1 = PasswordField("Пароль ещё раз", [InputRequired(), Length(min=5, message="Слишком короткий пароль")])
     submit = SubmitField('Зарегистрироваться')
