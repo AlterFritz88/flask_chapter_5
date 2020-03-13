@@ -1,5 +1,7 @@
 from collections import Counter
+from hashlib import md5
 from flask import abort, flash, session, redirect, request, render_template, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app, db
 from models import User, Category, Dish
@@ -63,14 +65,33 @@ def login():
     reg_form = Registration()
 
     if log_form.validate_on_submit():
-        return render_template("auth.html", log_form=log_form, reg_form=reg_form,  message="залогинен")
+        user = db.session.query(User).filter(User.mail == log_form.mail.data).first()
+        print(user.password)
+
+        if user:
+            print(user.password_valid(log_form.password.data))
+            print(generate_password_hash(log_form.password.data))
+            print(log_form.password.data)
+            print(check_password_hash(user.password, log_form.password.data))
+            if user.password_valid(log_form.password.data):
+                session["is_auth"] = True
+                return render_template("account.html", summa=session.get("summa", 0),
+                                       dishes_num=len(session.get("cart", [])), auth=session.get("is_auth"),
+                                       dishes_word=get_dish_num_name(len(session.get("cart", []))))
+            else:
+                return render_template("auth.html", log_form=log_form, reg_form=reg_form,
+                                       message="Неверный пароль")
+        else:
+            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Такого пользователя нет")
     else:
-        error = []
+        errors = []
         if log_form.mail.errors:
-            error.append("ошибка в электропочте")
+            errors += log_form.mail.errors
+
         if log_form.password.errors:
-            error.append("ошибка в пароле")
-        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=", ".join(error))
+            errors += log_form.password.errors
+        errors = ", ".join(errors)
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=errors)
 
 
 @app.route('/registration', methods=["POST"])
@@ -78,21 +99,28 @@ def registration():
     log_form = Login()
     reg_form = Registration()
     if reg_form.validate_on_submit():
-        if reg_form.password != reg_form.password_1:
-            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Ошибка в пароле. Парели не равны")
-        return render_template("auth.html", log_form=log_form, reg_form=reg_form,  message="зарегистрирован")
-
+        if reg_form.password.data != reg_form.password_1.data:
+            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Ошибка в пароле. Пароли не равны")
+        if not db.session.query(User).filter(User.mail == reg_form.mail.data).first():
+            new_user = User(mail=reg_form.mail.data, address=reg_form.address.data, name=reg_form.name.data,
+                            password=generate_password_hash(reg_form.address.data))
+            db.session.add(new_user)
+            db.session.commit()
+            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Пользователь зарегистрирован")
+        else:
+            return render_template("auth.html", log_form=log_form, reg_form=reg_form,
+                                   message="Ошибка регистрации. Такой пользователь уже существует")
     else:
-        print(reg_form.mail.errors)
-
-        error = []
+        errors = []
         if reg_form.mail.errors:
-            error.append("ошибка в электропочте")
+            errors += reg_form.mail.errors
+        if reg_form.name.errors:
+            errors += reg_form.name.errors
+        if reg_form.address.errors:
+            errors += reg_form.address.errors
         if reg_form.password.errors or reg_form.password_1.errors:
-            error.append("ошибка в пароле")
-        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=", ".join(error))
-
-    #return render_template("auth.html", log_form=log_form, reg_form=reg_form)
+            errors += reg_form.password.errors
+        return render_template("auth.html", log_form=log_form, reg_form=reg_form, message=", ".join(errors))
 
 
 @app.route('/cart_del/<dish_id>', methods=["POST", "GET"])

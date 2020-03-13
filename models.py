@@ -3,6 +3,7 @@ import datetime
 from sqlalchemy import Column, ForeignKey, Integer, String, Float, Date
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 db = SQLAlchemy()
@@ -16,9 +17,18 @@ class User(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     mail = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    password = Column(String(100), nullable=False)
     address = Column(String, nullable=False)
     #orders = relationship("Order", back_populates="id")
+
+
+
+    # @password.setter
+    # def password(self, passw):
+    #     self.password = generate_password_hash(passw)
+
+    def password_valid(self, password):
+        return check_password_hash(self.password, password)
 
 class Order(db.Model):
     __tablename__ = "orders"

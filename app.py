@@ -18,6 +18,7 @@ admin = Admin(app=app)
 
 admin.add_view(ModelView(Category, db.session))
 admin.add_view(ModelView(Dish, db.session))
+admin.add_view(ModelView(User, db.session))
 
 from views import *
 from servis_views import *

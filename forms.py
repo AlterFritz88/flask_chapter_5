@@ -21,4 +21,6 @@ class Registration(FlaskForm):
     mail = StringField("Электропочта", [Email("Неверная электропочта"), InputRequired()])
     password = PasswordField("Пароль", [InputRequired(), Length(min=5, message="Слишком короткий пароль")])
     password_1 = PasswordField("Пароль ещё раз", [InputRequired(), Length(min=5, message="Слишком короткий пароль")])
+    name = StringField("Имя", [InputRequired(), Length(min=2, message="Ошибка в имени")])
+    address = StringField("Адрес", [InputRequired(), Length(min=5, message="Слишком короткий адрес")])
     submit = SubmitField('Зарегистрироваться')
