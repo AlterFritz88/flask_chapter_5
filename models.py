@@ -13,22 +13,25 @@ def _get_date():
 
 
 class User(db.Model):
+    @property
+    def password(self):
+        return self._password
+
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     mail = Column(String, nullable=False)
-    password = Column(String(100), nullable=False)
+    password_hash = Column(String(), nullable=False)
     address = Column(String, nullable=False)
-    #orders = relationship("Order", back_populates="id")
+    orders = relationship("Order", back_populates="user")
 
-
-
-    # @password.setter
-    # def password(self, passw):
-    #     self.password = generate_password_hash(passw)
+    @password.setter
+    def password(self, passw):
+        self.password_hash = generate_password_hash(passw)
 
     def password_valid(self, password):
-        return check_password_hash(self.password, password)
+        return check_password_hash(self.password_hash, password)
+
 
 class Order(db.Model):
     __tablename__ = "orders"
@@ -36,8 +39,12 @@ class Order(db.Model):
     date = Column(Date, default=_get_date)
     summa = Column(Integer, nullable=False)
     status = Column(String, nullable=False)
+    phone = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    name = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
-    #dishes = relationship("Dish", back_populates="title")
+    user = relationship("User", back_populates="orders")
+    dishes = Column(String, nullable=False)
 
 
 class Dish(db.Model):

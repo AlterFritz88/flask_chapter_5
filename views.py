@@ -8,14 +8,13 @@ from models import User, Category, Dish
 from forms import MakeOrder, Registration, Login
 
 
-
 @app.route('/')
 def home():
     dishes_num = len(session.get("cart", []))
     dishes_word = get_dish_num_name(dishes_num)
     categories = db.session.query(Category).all()
     return render_template("main.html", summa=session.get("summa", 0), dishes_num=dishes_num, dishes_word=dishes_word,
-                           categories=categories, auth=session.get("is_auth"))
+                           categories=categories, auth=session.get("is_auth", False))
 
 
 @app.route('/cart', methods=["POST", "GET"])
@@ -36,7 +35,7 @@ def cart():
     form = MakeOrder()
     return render_template("cart.html", summa=session.get("summa", 0), dishes_num=len(session.get("cart", [])),
                            dishes_word=dishes_word, dish_list=dish_list, message=message,
-                           auth=session.get("is_auth"), form=form)
+                           auth=session.get("is_auth", False), form=form)
 
 
 @app.route('/make_order', methods=["POST", "GET"])
@@ -45,11 +44,25 @@ def make_order():
         session["cart_action"] = "У Вас нет блюд в корзине"
         return redirect("/cart")
 
-    if not session.get("user_id"):
+    if not session.get("user"):
         session["cart_action"] = "У Вас нет регистрации тут или Вы не вошли в систему"
         return redirect("/cart")
 
-    return render_template("ordered.html")
+    form_order = MakeOrder()
+    if form_order.validate_on_submit():         # хз почему, но это не работет
+        return render_template("ordered.html")
+    else:
+        errors = []
+        if form_order.phone.errors:
+            errors += form_order.phone.errors
+        if form_order.name.errors:
+            errors += form_order.name.errors
+        if form_order.address.errors:
+            errors += form_order.address.errors
+        if not errors:
+            return render_template("ordered.html")
+        session["cart_action"] = ", ".join(errors)
+        return redirect(url_for('.cart'))
 
 
 @app.route('/auth', methods=["POST", "GET"])
@@ -66,23 +79,18 @@ def login():
 
     if log_form.validate_on_submit():
         user = db.session.query(User).filter(User.mail == log_form.mail.data).first()
-        print(user.password)
-
         if user:
-            print(user.password_valid(log_form.password.data))
-            print(generate_password_hash(log_form.password.data))
-            print(log_form.password.data)
-            print(check_password_hash(user.password, log_form.password.data))
             if user.password_valid(log_form.password.data):
                 session["is_auth"] = True
-                return render_template("account.html", summa=session.get("summa", 0),
-                                       dishes_num=len(session.get("cart", [])), auth=session.get("is_auth"),
-                                       dishes_word=get_dish_num_name(len(session.get("cart", []))))
+                session["user"] = user.id
+                session["mail"] = user.mail
+                return redirect(url_for('.account'))
             else:
                 return render_template("auth.html", log_form=log_form, reg_form=reg_form,
                                        message="Неверный пароль")
         else:
-            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Такого пользователя нет")
+            return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Такого пользователя нет",
+                                   auth=session.get("is_auth", False))
     else:
         errors = []
         if log_form.mail.errors:
@@ -103,7 +111,7 @@ def registration():
             return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Ошибка в пароле. Пароли не равны")
         if not db.session.query(User).filter(User.mail == reg_form.mail.data).first():
             new_user = User(mail=reg_form.mail.data, address=reg_form.address.data, name=reg_form.name.data,
-                            password=generate_password_hash(reg_form.address.data))
+                            password=reg_form.password.data)
             db.session.add(new_user)
             db.session.commit()
             return render_template("auth.html", log_form=log_form, reg_form=reg_form, message="Пользователь зарегистрирован")
@@ -131,6 +139,23 @@ def del_item_from_cart(dish_id):
     session["summa"] = summa
     session["cart_action"] = "Блюдо было удалено из корзины"
     return redirect(url_for('.cart'))
+
+
+@app.route('/account', methods=["POST", "GET"])
+def account():
+    orders = db.session.query(User.orders).filter(User.id == session["user"]).first()
+    print(orders)
+    return render_template("account.html", summa=session.get("summa", 0),
+                           dishes_num=len(session.get("cart", [])), auth=session.get("is_auth"),
+                           dishes_word=get_dish_num_name(len(session.get("cart", []))),
+                           orders=orders)
+
+
+@app.route('/logout', methods=["POST", "GET"])
+def logout():
+    session["is_auth"] = False
+    session["user"] = None
+    return redirect(url_for('.home'))
 
 
 def get_dish_num_name(dishes_num: int) -> str:

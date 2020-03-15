@@ -8,6 +8,9 @@
     <section class="row">
       <div class="col-12 col-lg-8">
         <h1 class="h3 my-5">Личный кабинет. Заказы</h1>
+        {% if not orders %}
+        <h1 class="h3 my-5">У Вас пока нет заказов</h1>
+        {% else %}
         <div class="card">
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
@@ -60,6 +63,7 @@
             </div>
           </ul>
         </div>
+        {% endif %}
       </div>
     </section>
   </main>

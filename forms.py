@@ -5,9 +5,8 @@ from wtforms.validators import InputRequired, Length, DataRequired, Email
 
 class MakeOrder(FlaskForm):
     name = StringField("Ваше имя", [InputRequired("Введите имя")])
-    address = StringField("Адрес", [InputRequired("Введите адрес")])
-    mail = StringField("Электропочта", [InputRequired("Введите емайл"), Email("Это не почта")])
-    phone = StringField("Телефон", [InputRequired()])
+    address = StringField("Адрес", [InputRequired("Введите адрес"), Length(min=5, message="Слишком короткий адрес")])
+    phone = StringField("Телефон", [InputRequired("Введите телефон"), Length(min=5, message="Слишком короткий телефон")])
     submit = SubmitField('Оформить заказ')
 
 
