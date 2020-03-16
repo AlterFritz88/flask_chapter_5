@@ -4,7 +4,7 @@ from flask import abort, flash, session, redirect, request, render_template, url
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app, db
-from models import User, Category, Dish
+from models import User, Category, Dish, Order
 from forms import MakeOrder, Registration, Login
 
 
@@ -49,7 +49,19 @@ def make_order():
         return redirect("/cart")
 
     form_order = MakeOrder()
-    if form_order.validate_on_submit():         # хз почему, но это не работет
+    if form_order.validate_on_submit():         # хз почему, но это не работет при отсутвии ошибок
+        phone = form_order.phone.data
+        address = form_order.address.data
+        name = form_order.name.data
+        user = db.session.query(User).get(session["user"])
+        status = "Выполняется"
+        dishes = ", ".join(session["cart"])
+        summa = session["summa"]
+        order = Order(phone=phone, address=address, name=name, user=user, status=status, dishes=dishes, summa=summa)
+        db.session.add(order)
+        db.session.commit()
+        session["cart"] = []
+        session["summa"] = 0
         return render_template("ordered.html")
     else:
         errors = []
@@ -59,8 +71,21 @@ def make_order():
             errors += form_order.name.errors
         if form_order.address.errors:
             errors += form_order.address.errors
-        if not errors:
+        if not errors:      # поэтому продолжаю тут
+            phone = form_order.phone.data
+            address = form_order.address.data
+            name = form_order.name.data
+            user = db.session.query(User).get(session["user"])
+            status = "Выполняется"
+            dishes = ", ".join(session["cart"])
+            summa = session["summa"]
+            order = Order(phone=phone, address=address, name=name, user=user, status=status, dishes=dishes, summa=summa)
+            db.session.add(order)
+            db.session.commit()
+            session["cart"] = []
+            session["summa"] = 0
             return render_template("ordered.html")
+
         session["cart_action"] = ", ".join(errors)
         return redirect(url_for('.cart'))
 
@@ -143,18 +168,37 @@ def del_item_from_cart(dish_id):
 
 @app.route('/account', methods=["POST", "GET"])
 def account():
-    orders = db.session.query(User.orders).filter(User.id == session["user"]).first()
-    print(orders)
+    orders = db.session.query(User).get(session["user"]).orders
+
+    # да да быдлокод, но как иначе?
+    dishs_lists = []
+    for i, order in enumerate(orders):
+        dish_list = Counter(order.dishes.split(", "))
+        dish_list = [(db.session.query(Dish).get(int(x)), y) for x, y in dish_list.most_common()]
+        dishs_lists.append(dish_list)
+    month_dict = {1: "Января",
+                  2: "Февраля",
+                  3: "Марта",
+                  4: "Апреля",
+                  5: "Мая",
+                  6: "Июня",
+                  7: "Июля",
+                  8: "Августа",
+                  9: "Сентября",
+                  10: "Октября",
+                  11: "Ноября",
+                  12: "Декабря"}
     return render_template("account.html", summa=session.get("summa", 0),
                            dishes_num=len(session.get("cart", [])), auth=session.get("is_auth"),
                            dishes_word=get_dish_num_name(len(session.get("cart", []))),
-                           orders=orders)
+                           orders=orders, dishs_lists=dishs_lists, enumerate=enumerate, month_dict=month_dict)
 
 
 @app.route('/logout', methods=["POST", "GET"])
 def logout():
     session["is_auth"] = False
     session["user"] = None
+    session["mail"] = ""
     return redirect(url_for('.home'))
 
 
