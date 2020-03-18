@@ -22,7 +22,7 @@ admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(Order, db.session))
 
 from views import *
-from servis_views import *
+#from servis_views import *
 
 if __name__ == "__main__":
 
